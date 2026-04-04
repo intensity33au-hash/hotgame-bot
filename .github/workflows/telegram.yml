@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm init -y
-          npm install playwright form-data
+          npm install playwright
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
