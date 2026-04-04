@@ -4,7 +4,7 @@ const fs = require('fs');
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// 🔥 改成你的页面
+// 🔥 改成你的 UFO 页面
 const URL = 'https://intensity2aus.net/hotgame';
 
 (async () => {
@@ -20,8 +20,7 @@ const URL = 'https://intensity2aus.net/hotgame';
     const context = await browser.newContext({
       viewport: { width: 1600, height: 1200 },
       deviceScaleFactor: 1.25,
-      timezoneId: 'Australia/Sydney', // ⭐ 固定澳洲时间
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      timezoneId: 'Australia/Sydney'
     });
 
     const page = await context.newPage();
@@ -32,12 +31,11 @@ const URL = 'https://intensity2aus.net/hotgame';
       timeout: 120000
     });
 
-    // 等区块出现
+    // 等页面加载
     await page.waitForSelector('#steam-hot-wrap', { timeout: 120000 });
-
-    // 等 JS 渲染 + 图片
     await page.waitForTimeout(8000);
 
+    // 等图片加载
     await page.evaluate(async () => {
       const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
       await Promise.all(
@@ -54,21 +52,19 @@ const URL = 'https://intensity2aus.net/hotgame';
 
     await page.waitForTimeout(2000);
 
-    // ✅ 抓 Provider + 游戏名
+    // 🔥 抓 provider + 游戏
     const pageData = await page.evaluate(() => {
-      const titleText = document.querySelector('#dailyHotTitle')?.textContent?.trim() || '';
-
       const provider =
-        document.querySelector('#steamHotProviderLogo')?.alt?.replace(/\s*logo\s*/i, '').trim() ||
-        titleText.split('•')[0]?.trim() ||
+        document.querySelector('#steamHotProviderLogo')?.alt?.replace(/\s*logo/i, '').trim() ||
+        document.querySelector('#dailyHotTitle')?.textContent?.split('•')[0]?.trim() ||
         'HOT GAME';
 
-      const gameNames = Array.from(document.querySelectorAll('.steam-hot-name'))
+      const games = Array.from(document.querySelectorAll('.steam-hot-name'))
         .map(el => el.textContent.trim())
         .filter(Boolean)
         .slice(0, 4);
 
-      return { provider, gameNames };
+      return { provider, games };
     });
 
     console.log('Taking screenshot...');
@@ -86,12 +82,12 @@ const URL = 'https://intensity2aus.net/hotgame';
       throw new Error('Screenshot NOT created');
     }
 
-    const provider = (pageData.provider || 'HOT GAME').toUpperCase();
-    const games = pageData.gameNames || [];
+    // 🔥 游戏列表
+    const gamesText = pageData.games
+      .map(g => `📈 ${g}`)
+      .join('\n');
 
-    const gamesText = pageData.games.map(g => `📈 ${g}`).join('\n');
-
-    // 🔥 CTA随机（更真实）
+    // 🔥 CTA随机（更自然）
     const ctas = [
       'CLICK NOW',
       'PLAY NOW',
@@ -100,7 +96,7 @@ const URL = 'https://intensity2aus.net/hotgame';
 
     const cta = ctas[Math.floor(Math.random() * ctas.length)];
 
-    // 🔥 Telegram HTML caption
+    // 🔥 高级版 Caption（含 provider）
     const caption = `
 <b>🔥 INTENSITY2 • HOT GAME PICKS 🔥</b>
 🎰 <b>${provider} FEATURED SLOTS</b>
@@ -121,6 +117,7 @@ ${gamesText}
     form.append('chat_id', CHAT_ID);
     form.append('caption', caption);
     form.append('parse_mode', 'HTML'); // ⭐ 关键
+    form.append('disable_web_page_preview', 'true'); // ⭐ 去掉丑preview
     form.append('photo', new Blob([fs.readFileSync('hotgame.png')]), 'hotgame.png');
 
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
@@ -136,13 +133,10 @@ ${gamesText}
       throw new Error(JSON.stringify(json));
     }
 
-    console.log('✅ SENT SUCCESSFULLY');
+    console.log('✅ UFO SENT SUCCESS');
 
   } catch (err) {
     console.error('❌ ERROR:', err.message);
     process.exit(1);
   }
 })();
-
-form.append('parse_mode', 'HTML');
-form.append('disable_web_page_preview', 'true');
