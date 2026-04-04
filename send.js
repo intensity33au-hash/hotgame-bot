@@ -5,7 +5,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
 // 🔥 改成你的页面
-const URL = 'https://intensity2aus.net/test-test';
+const URL = 'https://intensity2aus.net/hotgame';
 
 (async () => {
   try {
