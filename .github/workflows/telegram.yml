@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm init -y
-          npm install playwright node-fetch form-data
+          npm install playwright form-data node-fetch@2
 
       - name: Run script
         run: node send.js
