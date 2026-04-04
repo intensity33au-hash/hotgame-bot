@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
-const URL = 'https://intensity2aus.net/test-test'; // 改成你的页面
+const URL = 'https://intensity2aus.net/test-test';
 
 (async () => {
   try {
@@ -14,9 +14,15 @@ const URL = 'https://intensity2aus.net/test-test'; // 改成你的页面
     console.log('Opening browser...');
 
     const browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage({
-      viewport: { width: 1600, height: 1200 }
+
+    const context = await browser.newContext({
+      viewport: { width: 1600, height: 1200 },
+      deviceScaleFactor: 1.25,
+      timezoneId: 'Australia/Sydney',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36'
     });
+
+    const page = await context.newPage();
 
     console.log('Loading page...');
     await page.goto(URL, {
@@ -24,12 +30,39 @@ const URL = 'https://intensity2aus.net/test-test'; // 改成你的页面
       timeout: 120000
     });
 
+    // 先等主区块出现
+    await page.waitForSelector('#steam-hot-wrap', { timeout: 120000 });
+
+    // 再等页面脚本把内容渲染出来
     await page.waitForTimeout(8000);
 
+    // 等区块内图片尽量加载完成
+    await page.evaluate(async () => {
+      const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
+      await Promise.all(
+        imgs.map(img => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise(resolve => {
+            const done = () => resolve();
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+            setTimeout(done, 10000);
+          });
+        })
+      );
+    });
+
+    // 再补一点时间给重绘
+    await page.waitForTimeout(2000);
+
     console.log('Taking screenshot...');
-    await page.screenshot({
-      path: 'hotgame.png',
-      fullPage: true
+    const card = await page.$('#steam-hot-wrap');
+    if (!card) {
+      throw new Error('Cannot find #steam-hot-wrap');
+    }
+
+    await card.screenshot({
+      path: 'hotgame.png'
     });
 
     await browser.close();
