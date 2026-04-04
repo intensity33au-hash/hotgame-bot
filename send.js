@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
-const URL = 'YOUR_PAGE_URL';
+const URL = 'https://intensity2aus.net/test-test';
 
 (async () => {
   if (!BOT_TOKEN || !CHAT_ID) {
