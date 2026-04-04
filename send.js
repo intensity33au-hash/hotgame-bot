@@ -100,7 +100,7 @@ ${gamesText}
 ⚡ Trusted by Australia Players  
 🏆 Premium Gaming Experience  
 ━━━━━━━━━━━━━━
-🌐 <b><a href="	https://intensity2aus.net/RFITS2TLG">${cta}</a ></b>
+🌐 <a href="	https://intensity2aus.net/RFITS2TLG">${cta}</a>
 🎯 <i>Play Smart • Win Big • Cash Out Fast</i>
 `;
 
