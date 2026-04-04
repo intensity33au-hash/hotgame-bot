@@ -1,10 +1,9 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
-const FormData = require('form-data');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
-const URL = 'https://intensity2aus.net/test-test'; // ⚠️ 一定要改
+const URL = 'https://intensity2aus.net/test-test'; // 改成你的页面
 
 (async () => {
   try {
@@ -25,7 +24,6 @@ const URL = 'https://intensity2aus.net/test-test'; // ⚠️ 一定要改
       timeout: 120000
     });
 
-    // 🔥 等页面完全渲染
     await page.waitForTimeout(8000);
 
     console.log('Taking screenshot...');
@@ -36,7 +34,6 @@ const URL = 'https://intensity2aus.net/test-test'; // ⚠️ 一定要改
 
     await browser.close();
 
-    // ✅ 检查文件是否存在
     if (!fs.existsSync('hotgame.png')) {
       throw new Error('Screenshot NOT created');
     }
@@ -45,14 +42,20 @@ const URL = 'https://intensity2aus.net/test-test'; // ⚠️ 一定要改
     console.log('Screenshot size:', size);
 
     if (size < 1000) {
-      throw new Error('Screenshot file too small (可能截图失败)');
+      throw new Error('Screenshot file too small');
     }
 
-    console.log('Sending to Telegram...');
+    console.log('Preparing Telegram upload...');
 
+    const fileBuffer = fs.readFileSync('hotgame.png');
+    const blob = new Blob([fileBuffer], { type: 'image/png' });
     const form = new FormData();
+
     form.append('chat_id', CHAT_ID);
-    form.append('photo', fs.createReadStream('hotgame.png'));
+    form.append('caption', 'Today Hot Games');
+    form.append('photo', blob, 'hotgame.png');
+
+    console.log('Sending to Telegram...');
 
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
       method: 'POST',
@@ -60,7 +63,6 @@ const URL = 'https://intensity2aus.net/test-test'; // ⚠️ 一定要改
     });
 
     const json = await res.json();
-
     console.log('Telegram response:', json);
 
     if (!json.ok) {
@@ -68,7 +70,6 @@ const URL = 'https://intensity2aus.net/test-test'; // ⚠️ 一定要改
     }
 
     console.log('✅ SENT SUCCESSFULLY');
-
   } catch (err) {
     console.error('❌ ERROR:', err.message);
     process.exit(1);
