@@ -99,7 +99,7 @@ const URL = 'https://intensity2aus.net/hotgame';
     // 🔥 高级版 Caption（含 provider）
     const caption = `
 <b>🔥 INTENSITY2 • HOT GAME PICKS 🔥</b>
-🎰 <b>${provider} FEATURED SLOTS</b>
+🎰 <b>${pageData.provider.toUpperCase()} FEATURED SLOTS</b>
 ━━━━━━━━━━━━━━
 ${gamesText}
 
