@@ -4,7 +4,7 @@ const fs = require('fs');
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const CHAT_ID = process.env.CHAT_ID;
 
-// 🔥 改成你的 UFO 页面
+// 改成你的 ITS2 页面
 const URL = 'https://intensity2aus.net/hotgame';
 
 (async () => {
@@ -31,11 +31,9 @@ const URL = 'https://intensity2aus.net/hotgame';
       timeout: 120000
     });
 
-    // 等页面加载
     await page.waitForSelector('#steam-hot-wrap', { timeout: 120000 });
     await page.waitForTimeout(8000);
 
-    // 等图片加载
     await page.evaluate(async () => {
       const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
       await Promise.all(
@@ -52,7 +50,6 @@ const URL = 'https://intensity2aus.net/hotgame';
 
     await page.waitForTimeout(2000);
 
-    // 🔥 抓 provider + 游戏
     const pageData = await page.evaluate(() => {
       const provider =
         document.querySelector('#steamHotProviderLogo')?.alt?.replace(/\s*logo/i, '').trim() ||
@@ -75,19 +72,16 @@ const URL = 'https://intensity2aus.net/hotgame';
     }
 
     await card.screenshot({ path: 'hotgame.png' });
-
     await browser.close();
 
     if (!fs.existsSync('hotgame.png')) {
       throw new Error('Screenshot NOT created');
     }
 
-    // 🔥 游戏列表
     const gamesText = pageData.games
-      .map(g => `📈 ${g}`)
+      .map(g => `➡️ ${g}`)
       .join('\n');
 
-    // 🔥 CTA随机（更自然）
     const ctas = [
       'CLICK NOW',
       'PLAY NOW',
@@ -96,7 +90,6 @@ const URL = 'https://intensity2aus.net/hotgame';
 
     const cta = ctas[Math.floor(Math.random() * ctas.length)];
 
-    // 🔥 高级版 Caption（含 provider）
     const caption = `
 <b>🔥 INTENSITY2 • HOT GAME PICKS 🔥</b>
 🎰 <b>${pageData.provider.toUpperCase()} FEATURED SLOTS</b>
@@ -107,7 +100,7 @@ ${gamesText}
 ⚡ Trusted by Australia Players  
 🏆 Premium Gaming Experience  
 ━━━━━━━━━━━━━━
-🌐 <b>Join Now ➤ <a href="https://intensity2aus.net/RFITS2TLG">CLICK NOW</a ></b>
+🌐 <b><a href="	https://intensity2aus.net/RFITS2TLG">${cta}</a ></b>
 🎯 <i>Play Smart • Win Big • Cash Out Fast</i>
 `;
 
@@ -116,8 +109,8 @@ ${gamesText}
     const form = new FormData();
     form.append('chat_id', CHAT_ID);
     form.append('caption', caption);
-    form.append('parse_mode', 'HTML'); // ⭐ 关键
-    form.append('disable_web_page_preview', 'true'); // ⭐ 去掉丑preview
+    form.append('parse_mode', 'HTML');
+    form.append('disable_web_page_preview', 'true');
     form.append('photo', new Blob([fs.readFileSync('hotgame.png')]), 'hotgame.png');
 
     const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
@@ -126,15 +119,13 @@ ${gamesText}
     });
 
     const json = await res.json();
-
     console.log('Telegram response:', json);
 
     if (!json.ok) {
       throw new Error(JSON.stringify(json));
     }
 
-    console.log('✅ UFO SENT SUCCESS');
-
+    console.log('✅ ITS2 SENT SUCCESS');
   } catch (err) {
     console.error('❌ ERROR:', err.message);
     process.exit(1);
