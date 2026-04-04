@@ -89,7 +89,7 @@ const URL = 'https://intensity2aus.net/hotgame';
     const provider = (pageData.provider || 'HOT GAME').toUpperCase();
     const games = pageData.gameNames || [];
 
-    const gamesText = games.map(g => `➡️ ${g.name}`).join('\n');
+    const gamesText = pageData.games.map(g => `📈 ${g}`).join('\n');
 
     // 🔥 CTA随机（更真实）
     const ctas = [
@@ -110,9 +110,8 @@ ${gamesText}
 💰 <b>Fast Payouts & Instant Deposit</b>  
 ⚡ Trusted by Australia Players  
 🏆 Premium Gaming Experience  
-
 ━━━━━━━━━━━━━━
-🌐 <b>Join Now ➤ <a href=" ">CLICK NOW</a ></b>
+🌐 <b>Join Now ➤ <a href="https://intensity2aus.net/RFITS2TLG">CLICK NOW</a ></b>
 🎯 <i>Play Smart • Win Big • Cash Out Fast</i>
 `;
 
@@ -144,3 +143,6 @@ ${gamesText}
     process.exit(1);
   }
 })();
+
+form.append('parse_mode', 'HTML');
+form.append('disable_web_page_preview', 'true');
