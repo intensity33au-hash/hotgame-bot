@@ -2,7 +2,7 @@ name: Send Hot Game Screenshot
 
 on:
   schedule:
-    - cron: '0 23 * * *'
+    - cron: '0 14 * * *'
   workflow_dispatch:
 
 jobs:
