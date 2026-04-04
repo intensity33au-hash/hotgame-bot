@@ -18,7 +18,6 @@ const URL = 'https://intensity2aus.net/test-test';
   });
 
   await page.goto(URL, { waitUntil: 'networkidle', timeout: 120000 });
-
   await page.waitForSelector('#steam-hot-wrap', { timeout: 120000 });
 
   const card = await page.$('#steam-hot-wrap');
@@ -26,10 +25,7 @@ const URL = 'https://intensity2aus.net/test-test';
     throw new Error('Cannot find #steam-hot-wrap');
   }
 
-  await card.screenshot({
-    path: 'hotgame.png'
-  });
-
+  await card.screenshot({ path: 'hotgame.png' });
   await browser.close();
 
   const form = new FormData();
