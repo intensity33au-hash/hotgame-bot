@@ -89,7 +89,7 @@ const URL = 'https://intensity2aus.net/hotgame';
     const provider = (pageData.provider || 'HOT GAME').toUpperCase();
     const games = pageData.gameNames || [];
 
-    const gamesText = games.map(name => `➡️ ${name}`).join('\n');
+    const gamesText = games.map(g => `➡️ ${g.name}`).join('\n');
 
     // 🔥 CTA随机（更真实）
     const ctas = [
@@ -101,18 +101,20 @@ const URL = 'https://intensity2aus.net/hotgame';
     const cta = ctas[Math.floor(Math.random() * ctas.length)];
 
     // 🔥 Telegram HTML caption
-    const caption =
-`🪙 ${provider} HOT GAME TIPS 🪙
-
+    const caption = `
+<b>🔥 INTENSITY2 • HOT GAME PICKS 🔥</b>
+🎰 <b>${provider} FEATURED SLOTS</b>
+━━━━━━━━━━━━━━
 ${gamesText}
 
-⚡ Fast Payouts & Deposit!
-🌟 Want to be the next Big Winner?
-🥳 Join now & play top-tier games
-🎁 Win massive prizes today!
+💰 <b>Fast Payouts & Instant Deposit</b>  
+⚡ Trusted by Australia Players  
+🏆 Premium Gaming Experience  
 
-🌐 INTENSITY2 Official Website
-👉 <a href="https://intensity2aus.net/RFITS2TLG">${cta}</a >`;
+━━━━━━━━━━━━━━
+🌐 <b>Join Now ➤ <a href=" ">CLICK NOW</a ></b>
+🎯 <i>Play Smart • Win Big • Cash Out Fast</i>
+`;
 
     console.log('Sending to Telegram...');
 
