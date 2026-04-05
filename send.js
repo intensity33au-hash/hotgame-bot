@@ -25,30 +25,48 @@ const URL = 'https://intensity2aus.net/hotgame';
 
     const page = await context.newPage();
 
-    console.log('Loading page...');
-    await page.goto(URL, {
-      waitUntil: 'domcontentloaded',
-      timeout: 120000
-    });
+console.log('Loading page...');
 
-    await page.waitForSelector('#steam-hot-wrap', { timeout: 120000 });
-    await page.waitForTimeout(8000);
+await page.goto(URL, {
+  waitUntil: 'networkidle',
+  timeout: 120000
+});
 
-    await page.evaluate(async () => {
-      const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
-      await Promise.all(
-        imgs.map(img => {
-          if (img.complete && img.naturalWidth > 0) return;
-          return new Promise(resolve => {
-            img.onload = resolve;
-            img.onerror = resolve;
-            setTimeout(resolve, 10000);
-          });
-        })
-      );
-    });
+await page.waitForSelector('#steam-hot-wrap', {
+  timeout: 120000
+});
 
-    await page.waitForTimeout(8000);
+// 等区块内内容真正渲染出来
+await page.waitForFunction(() => {
+  const wrap = document.querySelector('#steam-hot-wrap');
+  if (!wrap) return false;
+
+  const names = wrap.querySelectorAll('.steam-hot-name');
+  return names.length > 0;
+}, {
+  timeout: 120000
+});
+
+// 等区块内所有 <img> 尽量加载完成
+await page.evaluate(async () => {
+  const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
+
+  await Promise.all(
+    imgs.map(img => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+
+      return new Promise(resolve => {
+        const done = () => resolve();
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
+        setTimeout(done, 10000);
+      });
+    })
+  );
+});
+
+// 再补一点时间给浏览器重绘
+await page.waitForTimeout(1500);
 
     const pageData = await page.evaluate(() => {
       const provider =
