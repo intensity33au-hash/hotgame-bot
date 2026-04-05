@@ -48,7 +48,7 @@ const URL = 'https://intensity2aus.net/hotgame';
       );
     });
 
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(8000);
 
     const pageData = await page.evaluate(() => {
       const provider =
