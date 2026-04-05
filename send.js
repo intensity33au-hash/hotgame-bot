@@ -25,18 +25,33 @@ const URL = 'https://intensity2aus.net/hotgame';
 
 const page = await context.newPage();
 
-// 🔍 Debug：专门看 V-POWER 图片请求
-page.on('response', async (response) => {
-  const url = response.url();
-  if (url.includes('cdn.vpower12.com')) {
-    console.log('VPOWER RESP:', response.status(), url);
-  }
-});
+await page.route('https://cdn.vpower12.com/manage/game-icon/**', async route => {
+  try {
+    const url = route.request().url();
+    console.log('Proxying VPOWER image:', url);
 
-page.on('requestfailed', (request) => {
-  const url = request.url();
-  if (url.includes('cdn.vpower12.com')) {
-    console.log('VPOWER FAIL:', request.failure()?.errorText, url);
+    const res = await fetch(url, {
+      headers: {
+        'referer': 'https://ufo9.asia/',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
+        'accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+      }
+    });
+
+    if (!res.ok) {
+      console.log('VPOWER proxy fetch failed:', res.status, url);
+      return route.abort();
+    }
+
+    const buffer = Buffer.from(await res.arrayBuffer());
+    await route.fulfill({
+      status: 200,
+      contentType: res.headers.get('content-type') || 'image/png',
+      body: buffer
+    });
+  } catch (err) {
+    console.log('VPOWER route error:', err.message);
+    await route.abort();
   }
 });
 
@@ -51,7 +66,6 @@ await page.waitForSelector('#steam-hot-wrap', {
   timeout: 120000
 });
 
-// 等内容真正渲染出来
 await page.waitForFunction(() => {
   const wrap = document.querySelector('#steam-hot-wrap');
   if (!wrap) return false;
@@ -64,7 +78,6 @@ await page.waitForFunction(() => {
   timeout: 120000
 });
 
-// 等区块内所有 <img> 真正完成
 await page.evaluate(async () => {
   const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
 
@@ -92,19 +105,6 @@ await page.evaluate(async () => {
   );
 });
 
-// 确保所有卡片里的 img 都有尺寸
-await page.waitForFunction(() => {
-  const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
-  if (!imgs.length) return false;
-
-  return imgs.every(img => img.complete && img.naturalWidth > 0);
-}, {
-  timeout: 15000
-}).catch(() => {
-  console.log('Some images still not fully ready after waitForFunction');
-});
-
-// 再补一点时间给浏览器重绘
 await page.waitForTimeout(2500);
 
     const pageData = await page.evaluate(() => {
