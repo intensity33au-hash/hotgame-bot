@@ -23,7 +23,22 @@ const URL = 'https://intensity2aus.net/hotgame';
       timezoneId: 'Australia/Sydney'
     });
 
-    const page = await context.newPage();
+const page = await context.newPage();
+
+// 🔍 Debug：专门看 V-POWER 图片请求
+page.on('response', async (response) => {
+  const url = response.url();
+  if (url.includes('cdn.vpower12.com')) {
+    console.log('VPOWER RESP:', response.status(), url);
+  }
+});
+
+page.on('requestfailed', (request) => {
+  const url = request.url();
+  if (url.includes('cdn.vpower12.com')) {
+    console.log('VPOWER FAIL:', request.failure()?.errorText, url);
+  }
+});
 
 console.log('Loading page...');
 
@@ -36,37 +51,61 @@ await page.waitForSelector('#steam-hot-wrap', {
   timeout: 120000
 });
 
-// 等区块内内容真正渲染出来
+// 等内容真正渲染出来
 await page.waitForFunction(() => {
   const wrap = document.querySelector('#steam-hot-wrap');
   if (!wrap) return false;
 
+  const cards = wrap.querySelectorAll('.steam-hot-card');
   const names = wrap.querySelectorAll('.steam-hot-name');
-  return names.length > 0;
+
+  return cards.length > 0 && names.length > 0;
 }, {
   timeout: 120000
 });
 
-// 等区块内所有 <img> 尽量加载完成
+// 等区块内所有 <img> 真正完成
 await page.evaluate(async () => {
   const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
 
   await Promise.all(
     imgs.map(img => {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-
       return new Promise(resolve => {
-        const done = () => resolve();
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
-        setTimeout(done, 10000);
+        const finish = () => {
+          if (img.complete && img.naturalWidth > 0) {
+            resolve();
+          } else {
+            setTimeout(resolve, 3000);
+          }
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+          resolve();
+          return;
+        }
+
+        img.addEventListener('load', finish, { once: true });
+        img.addEventListener('error', finish, { once: true });
+        setTimeout(finish, 12000);
       });
     })
   );
 });
 
+// 确保所有卡片里的 img 都有尺寸
+await page.waitForFunction(() => {
+  const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
+  if (!imgs.length) return false;
+
+  return imgs.every(img => img.complete && img.naturalWidth > 0);
+}, {
+  timeout: 15000
+}).catch(() => {
+  console.log('Some images still not fully ready after waitForFunction');
+});
+
 // 再补一点时间给浏览器重绘
-await page.waitForTimeout(1500);
+await page.waitForTimeout(2500);
 
     const pageData = await page.evaluate(() => {
       const provider =
