@@ -23,89 +23,34 @@ const URL = 'https://intensity2aus.net/hotgame';
       timezoneId: 'Australia/Sydney'
     });
 
-const page = await context.newPage();
+    const page = await context.newPage();
 
-await page.route('https://cdn.vpower12.com/manage/game-icon/**', async route => {
-  try {
-    const url = route.request().url();
-    console.log('Proxying VPOWER image:', url);
-
-    const res = await fetch(url, {
-      headers: {
-        'referer': 'https://ufo9.asia/',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
-        'accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-      }
+    console.log('Loading page...');
+    await page.goto(URL, {
+      waitUntil: 'domcontentloaded',
+      timeout: 120000
     });
 
-    if (!res.ok) {
-      console.log('VPOWER proxy fetch failed:', res.status, url);
-      return route.abort();
-    }
+    // 等页面加载
+    await page.waitForSelector('#steam-hot-wrap', { timeout: 120000 });
+    await page.waitForTimeout(8000);
 
-    const buffer = Buffer.from(await res.arrayBuffer());
-    await route.fulfill({
-      status: 200,
-      contentType: res.headers.get('content-type') || 'image/png',
-      body: buffer
+    // 等图片加载
+    await page.evaluate(async () => {
+      const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
+      await Promise.all(
+        imgs.map(img => {
+          if (img.complete && img.naturalWidth > 0) return;
+          return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 10000);
+          });
+        })
+      );
     });
-  } catch (err) {
-    console.log('VPOWER route error:', err.message);
-    await route.abort();
-  }
-});
 
-console.log('Loading page...');
-
-await page.goto(URL, {
-  waitUntil: 'networkidle',
-  timeout: 120000
-});
-
-await page.waitForSelector('#steam-hot-wrap', {
-  timeout: 120000
-});
-
-await page.waitForFunction(() => {
-  const wrap = document.querySelector('#steam-hot-wrap');
-  if (!wrap) return false;
-
-  const cards = wrap.querySelectorAll('.steam-hot-card');
-  const names = wrap.querySelectorAll('.steam-hot-name');
-
-  return cards.length > 0 && names.length > 0;
-}, {
-  timeout: 120000
-});
-
-await page.evaluate(async () => {
-  const imgs = Array.from(document.querySelectorAll('#steam-hot-wrap img'));
-
-  await Promise.all(
-    imgs.map(img => {
-      return new Promise(resolve => {
-        const finish = () => {
-          if (img.complete && img.naturalWidth > 0) {
-            resolve();
-          } else {
-            setTimeout(resolve, 3000);
-          }
-        };
-
-        if (img.complete && img.naturalWidth > 0) {
-          resolve();
-          return;
-        }
-
-        img.addEventListener('load', finish, { once: true });
-        img.addEventListener('error', finish, { once: true });
-        setTimeout(finish, 12000);
-      });
-    })
-  );
-});
-
-await page.waitForTimeout(2500);
+    await page.waitForTimeout(2000);
 
     const pageData = await page.evaluate(() => {
       const provider =
