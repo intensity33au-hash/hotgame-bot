@@ -8,17 +8,18 @@ const TX_ID = String(process.env.TX_ID || '');
 const TX_AMOUNT = Math.abs(Number(process.env.TX_AMOUNT || 0));
 const TX_TIME = String(process.env.TX_TIME || '');
 
-const API_URL = 'https://intensity2aus.com/getLiveStat.php';
-const MIN_AMOUNT = 500;
+const API_URL = 'https://intensity2aus.com';
+// 1. 这里修改为 5000，低于 5000 的触发直接在开头就会被拦截跳出
+const MIN_AMOUNT = 5000; 
 
 function absAmount(value) {
   const cleaned = String(value ?? '').replace(/,/g, '').trim();
   return Math.abs(parseFloat(cleaned) || 0);
 }
 
+// 2. 简化文案函数，只保留 5000+ 的 Jackpot 文案
 function getCaption(amount, provider, mobile) {
-  if (amount >= 5000) {
-    return `🎉 <b>CONGRATULATIONS!</b>
+  return `🎉 <b>CONGRATULATIONS!</b>
 ━━━━━━━━━━━━━━
 👑 <b>JACKPOT PAYOUT CONFIRMED</b>
 💰 <b>AUD ${amount.toFixed(2)}</b>
@@ -31,51 +32,6 @@ function getCaption(amount, provider, mobile) {
 🪙 Withdraw 2–5min
 ━━━━━━━━━━━━━━
 💎 <a href="https://intensity2aus.net/RFITS2TLG">START WINNING NOW</a >`;
-  }
-
-  if (amount >= 2000) {
-    return `🎉 <b>CONGRATULATIONS!</b>
-━━━━━━━━━━━━━━
-🚨 <b>MEGA WIN JUST PAID</b>
-💰 <b>AUD ${amount.toFixed(2)}</b>
-🎰 ${provider}
-📱 ${mobile}
-━━━━━━━━━━━━━━
-⚡ Instant Withdraw • AU Trusted
-🪙 Deposit 5–15s
-🪙 Withdraw 2–5min
-━━━━━━━━━━━━━━
-🔥 <a href="https://intensity2aus.net/RFITS2TLG">JOIN NOW & WIN BIG</a >`;
-  }
-
-  if (amount >= 1000) {
-    return `🎉 <b>CONGRATULATIONS!</b>
-━━━━━━━━━━━━━━
-🚨 <b>INTENSITY2 BIG WIN ALERT</b>
-💰 <b>AUD ${amount.toFixed(2)}</b>
-🎰 <b>${provider}</b>
-📱 ${mobile}
-━━━━━━━━━━━━━━
-⚡ FAST PAYOUT SYSTEM
-🐸 Trusted by AU Players
-🪙 Deposit 5–15s ✅
-🪙 Withdraw 2–5min ✅
-━━━━━━━━━━━━━━
-🔥 <a href="https://intensity2aus.net/RFITS2TLG">CLICK NOW & WIN</a >`;
-  }
-
-  return `🎉 <b>CONGRATULATIONS!</b>
-━━━━━━━━━━━━━━
-👽 <b>INTENSITY2 WIN UPDATE</b>
-💰 <b>AUD ${amount.toFixed(2)}</b>
-🎰 ${provider}
-📱 ${mobile}
-━━━━━━━━━━━━━━
-⚡ Fast & Secure Payout
-🪙 Deposit 5–15s
-🪙 Withdraw 2–5min
-━━━━━━━━━━━━━━
-🌐 <a href="https://intensity2aus.net/RFITS2TLG">PLAY NOW</a >`;
 }
 
 async function sendPhoto(imagePath, caption) {
@@ -98,7 +54,7 @@ async function sendPhoto(imagePath, caption) {
     form.append('disable_web_page_preview', 'true');
     form.append('photo', new Blob([fileBuffer], { type: 'image/png' }), 'withdraw.png');
 
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+    const res = await fetch(`https://telegram.org{BOT_TOKEN}/sendPhoto`, {
       method: 'POST',
       body: form
     });
@@ -155,6 +111,7 @@ function findMatchingWithdraw(withdraws, targetAmount) {
       throw new Error('Missing workflow input');
     }
 
+    // 这里会自动拦截低于 5000 的金额，并打印 exit 日志
     if (TX_AMOUNT < MIN_AMOUNT) {
       console.log(`Amount below ${MIN_AMOUNT}, exit`);
       return;
