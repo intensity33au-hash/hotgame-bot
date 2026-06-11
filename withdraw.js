@@ -8,17 +8,16 @@ const TX_ID = String(process.env.TX_ID || '');
 const TX_AMOUNT = Math.abs(Number(process.env.TX_AMOUNT || 0));
 const TX_TIME = String(process.env.TX_TIME || '');
 
-// ✅ 修复 1：补全了丢失的 /getLiveStat.php 路径
-const API_URL = 'https://intensity2aus.com/getLiveStat.php';
-// 这里修改为 5000，低于 5000 的触发直接在开头就会被拦截跳出
-const MIN_AMOUNT = 5000; 
+const API_URL = 'https://intensity2aus.net/getLiveStat.php';
+// 1. 修改为 5000，低于 5000 直接拦截退出
+const MIN_AMOUNT = 5000;
 
 function absAmount(value) {
   const cleaned = String(value ?? '').replace(/,/g, '').trim();
   return Math.abs(parseFloat(cleaned) || 0);
 }
 
-// 简化文案函数，只保留 5000+ 的 Jackpot 文案
+// 2. 简化文案函数，只保留 5000+ 的大奖通知
 function getCaption(amount, provider, mobile) {
   return `🎉 <b>CONGRATULATIONS!</b>
 ━━━━━━━━━━━━━━
@@ -55,8 +54,7 @@ async function sendPhoto(imagePath, caption) {
     form.append('disable_web_page_preview', 'true');
     form.append('photo', new Blob([fileBuffer], { type: 'image/png' }), 'withdraw.png');
 
-    // ✅ 修复 2：修正了完全写错的 Telegram 机器人 API 接口请求地址
-    const res = await fetch(`https://telegram.org{BOT_TOKEN}/sendPhoto`, {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
       method: 'POST',
       body: form
     });
@@ -76,10 +74,9 @@ async function fetchLiveWithdraws() {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      // ✅ 修复 3：将 referer 域名调整为与 API 对应的 .com，防止跨域拦截
-      'referer': 'https://intensity2aus.com'
+      'referer': 'https://intensity2aus.net/'
     },
-    body: 'background=1&mId=10511'
+    body: 'background=1&mId=879'
   });
 
   const json = await res.json();
@@ -114,7 +111,7 @@ function findMatchingWithdraw(withdraws, targetAmount) {
       throw new Error('Missing workflow input');
     }
 
-    // 这里会自动拦截低于 5000 的金额，并打印 exit 日志
+    // 小于 5000 时的拦截退出点
     if (TX_AMOUNT < MIN_AMOUNT) {
       console.log(`Amount below ${MIN_AMOUNT}, exit`);
       return;
