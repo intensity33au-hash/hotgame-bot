@@ -9,7 +9,7 @@ const TX_AMOUNT = Math.abs(Number(process.env.TX_AMOUNT || 0));
 const TX_TIME = String(process.env.TX_TIME || '');
 
 // ✅ 修复 1：补全了丢失的 /getLiveStat.php 路径
-const API_URL = 'https://intensity2aus.com';
+const API_URL = 'https://intensity2aus.com/getLiveStat.php';
 // 这里修改为 5000，低于 5000 的触发直接在开头就会被拦截跳出
 const MIN_AMOUNT = 5000; 
 
